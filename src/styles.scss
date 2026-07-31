@@ -1,0 +1,192 @@
+// ============================================================================
+//  ngmusic — Apple Music design system layered over Angular Material (M3)
+//  We keep Material's tokens + accessibility and restyle components to match
+//  Apple's look: SF Pro type, the Apple Music red accent, frosted surfaces,
+//  hairline separators and dark-by-default vibrancy.
+// ============================================================================
+@use '@angular/material' as mat;
+
+// Apple's native font stack, written as a plain Sass list (Bootstrap-style) so
+// `-apple-system` and the generic families stay UNquoted — quoting them would
+// stop the browser resolving the real macOS/iOS system font (SF Pro).
+$sf: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
+  'Helvetica Neue', Helvetica, Arial, sans-serif;
+
+html {
+  height: 100%;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$rose-palette,
+        tertiary: mat.$rose-palette,
+      ),
+      typography: (
+        plain-family: $sf,
+        brand-family: $sf,
+        bold-weight: 700,
+        medium-weight: 600,
+        regular-weight: 400,
+      ),
+      density: -1,
+    )
+  );
+
+  // Force Material's accent to the Apple Music red in both light & dark.
+  @include mat.theme-overrides(
+    (
+      primary: #fa2d48,
+      on-primary: #ffffff,
+    )
+  );
+
+  // Dark by default (Apple Music's signature), overridden by the theme toggle.
+  color-scheme: dark;
+}
+
+html.theme-system {
+  color-scheme: light dark;
+}
+html.theme-light {
+  color-scheme: light;
+}
+html.theme-dark {
+  color-scheme: dark;
+}
+
+// ---- Apple palette + surface tokens (auto light/dark via `light-dark()`) ----
+:root {
+  --apple-red: #fa2d48;
+  --apple-red-bright: #fb5c74;
+  --apple-red-deep: #fa233b;
+  --apple-accent: linear-gradient(135deg, #fb5c74 0%, #fa233b 100%);
+
+  --app-bg: light-dark(#f4f4f6, #000000);
+  --sidebar-bg: light-dark(rgba(244, 244, 246, 0.72), rgba(18, 18, 20, 0.62));
+  --topbar-bg: light-dark(rgba(250, 250, 252, 0.8), rgba(24, 24, 26, 0.72));
+  --content-bg: light-dark(#ffffff, #0b0b0d);
+  --content-bg-2: light-dark(#fbfbfd, #121214);
+  --card-bg: light-dark(#ffffff, #1c1c1e);
+  --elevated-bg: light-dark(rgba(255, 255, 255, 0.86), rgba(44, 44, 46, 0.76));
+
+  --text-primary: light-dark(#1d1d1f, #f5f5f7);
+  --text-secondary: light-dark(#6e6e73, #a1a1a6);
+  --text-tertiary: light-dark(#a1a1a6, #6e6e73);
+
+  --hairline: light-dark(rgba(0, 0, 0, 0.09), rgba(255, 255, 255, 0.08));
+  --hover-bg: light-dark(rgba(0, 0, 0, 0.045), rgba(255, 255, 255, 0.06));
+  --active-bg: light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.1));
+  --track-inactive: light-dark(rgba(0, 0, 0, 0.16), rgba(255, 255, 255, 0.22));
+  --shadow-soft: light-dark(0 8px 30px rgba(0, 0, 0, 0.12), 0 8px 30px rgba(0, 0, 0, 0.5));
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  --sidebar-width: 248px;
+  --topbar-height: 64px;
+}
+
+// ---- Material component restyle to Apple (token overrides on safe tokens) ----
+:root {
+  // Scrubber / volume sliders → thin Apple track, small white handle.
+  @include mat.slider-overrides(
+    (
+      active-track-color: var(--apple-red),
+      inactive-track-color: var(--track-inactive),
+      handle-color: #ffffff,
+      focus-handle-color: #ffffff,
+      hover-handle-color: #ffffff,
+      handle-elevation: 1,
+      active-track-height: 4px,
+      inactive-track-height: 4px,
+      handle-width: 12px,
+      handle-height: 12px,
+    )
+  );
+
+  // Pill-shaped buttons like Apple's controls.
+  @include mat.button-overrides(
+    (
+      filled-container-shape: 980px,
+      outlined-container-shape: 980px,
+      protected-container-shape: 980px,
+      text-container-shape: 980px,
+    )
+  );
+
+  @include mat.ripple-overrides(
+    (
+      color: light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.12)),
+    )
+  );
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--app-bg);
+  color: var(--text-primary);
+  font-family: $sf;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  user-select: none;
+}
+
+// Apple-thin scrollbars.
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--track-inactive) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: light-dark(rgba(0, 0, 0, 0.22), rgba(255, 255, 255, 0.2));
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: light-dark(rgba(0, 0, 0, 0.35), rgba(255, 255, 255, 0.32));
+  background-clip: content-box;
+}
+
+// Icon buttons: quiet grey that lifts to full-contrast on hover (Apple feel).
+.mat-mdc-icon-button {
+  color: var(--text-secondary);
+  transition: color 0.15s ease, transform 0.12s ease, background-color 0.15s ease;
+  &:hover {
+    color: var(--text-primary);
+  }
+}
+
+// Material menu → frosted rounded Apple panel.
+.mat-mdc-menu-panel.mat-mdc-menu-panel {
+  border-radius: 12px;
+  background: var(--elevated-bg);
+  backdrop-filter: saturate(180%) blur(30px);
+  -webkit-backdrop-filter: saturate(180%) blur(30px);
+  border: 0.5px solid var(--hairline);
+  box-shadow: var(--shadow-soft);
+}
+
+.no-select {
+  user-select: none;
+}

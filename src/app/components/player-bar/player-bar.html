@@ -1,0 +1,92 @@
+<div class="bar">
+  <!-- Transport -->
+  <div class="transport">
+    <button
+      matIconButton
+      class="ctl"
+      [class.on]="player.shuffle()"
+      aria-label="Shuffle"
+      (click)="player.toggleShuffle()"
+    >
+      <mat-icon>shuffle</mat-icon>
+    </button>
+    <button matIconButton class="ctl" aria-label="Previous" (click)="player.previous()">
+      <mat-icon>skip_previous</mat-icon>
+    </button>
+    <button
+      matIconButton
+      class="ctl play"
+      [attr.aria-label]="player.isPlaying() ? 'Pause' : 'Play'"
+      (click)="player.togglePlay()"
+    >
+      <mat-icon>{{ player.isPlaying() ? 'pause' : 'play_arrow' }}</mat-icon>
+    </button>
+    <button matIconButton class="ctl" aria-label="Next" (click)="player.next()">
+      <mat-icon>skip_next</mat-icon>
+    </button>
+    <button
+      matIconButton
+      class="ctl"
+      [class.on]="player.repeat() !== 'off'"
+      aria-label="Repeat"
+      (click)="player.cycleRepeat()"
+    >
+      <mat-icon>{{ player.repeat() === 'one' ? 'repeat_one' : 'repeat' }}</mat-icon>
+    </button>
+  </div>
+
+  <!-- Now-playing LCD -->
+  <div class="lcd">
+    @if (player.currentTrack(); as track) {
+      <div class="art">
+        @if (track.artworkUrl) {
+          <img [src]="track.artworkUrl" [alt]="track.album" />
+        } @else {
+          <mat-icon>music_note</mat-icon>
+        }
+      </div>
+      <div class="lcd-body">
+        <div class="meta">
+          <span class="title">{{ track.title }}</span>
+          <span class="dash">—</span>
+          <span class="artist">{{ track.artist }}</span>
+        </div>
+        <div class="scrub">
+          <span class="time">{{ player.currentTime() | duration }}</span>
+          <div class="scrub-track" (pointerdown)="startScrub($event, track_bar)" #track_bar>
+            <div class="scrub-buffer"></div>
+            <div class="scrub-fill" [style.width.%]="player.progress() * 100">
+              <span class="scrub-knob"></span>
+            </div>
+          </div>
+          <span class="time">-{{ remaining() | duration }}</span>
+        </div>
+      </div>
+    } @else {
+      <div class="art empty"><mat-icon>music_note</mat-icon></div>
+      <div class="lcd-body">
+        <div class="meta placeholder">Not Playing</div>
+        <div class="scrub">
+          <span class="time">--:--</span>
+          <div class="scrub-track"><div class="scrub-buffer"></div></div>
+          <span class="time">--:--</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Volume -->
+  <div class="extras">
+    <button matIconButton class="ctl" aria-label="Mute" (click)="player.toggleMute()">
+      <mat-icon>{{ volumeIcon() }}</mat-icon>
+    </button>
+    <mat-slider class="volume" [min]="0" [max]="100" [step]="1" [discrete]="false">
+      <input
+        matSliderThumb
+        [value]="player.effectiveVolume() * 100"
+        (valueChange)="onVolume($event)"
+        aria-label="Volume"
+      />
+    </mat-slider>
+  </div>
+</div>

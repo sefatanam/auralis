@@ -1,0 +1,15 @@
+<app-player-bar class="shell-topbar" />
+<app-sidebar class="shell-sidebar" />
+<main class="shell-content">
+  <app-library />
+</main>
+
+@if (dragging()) {
+  <div class="drop-overlay">
+    <div class="drop-card">
+      <mat-icon>library_music</mat-icon>
+      <p class="drop-title">Add to Library</p>
+      <p class="drop-sub">Drop audio files anywhere to import them</p>
+    </div>
+  </div>
+}

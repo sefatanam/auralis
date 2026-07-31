@@ -1,0 +1,56 @@
+<aside class="sidebar">
+  <header class="brand">
+    <span class="brand-mark"><mat-icon>graphic_eq</mat-icon></span>
+    <span class="brand-name">Music</span>
+    <span class="grow"></span>
+    <button matIconButton aria-label="Toggle appearance" (click)="theme.toggle()">
+      <mat-icon>{{ theme.mode() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+  </header>
+
+  <div class="search">
+    <mat-icon class="search-icon">search</mat-icon>
+    <input
+      class="search-input"
+      type="text"
+      placeholder="Search"
+      [value]="nav.search()"
+      (input)="onSearch($any($event.target).value)"
+    />
+    @if (nav.search()) {
+      <button class="search-clear" aria-label="Clear search" (click)="onSearch('')">
+        <mat-icon>cancel</mat-icon>
+      </button>
+    }
+  </div>
+
+  <nav class="nav">
+    <p class="nav-title">Library</p>
+    @for (item of items; track item.view) {
+      <button
+        class="nav-item"
+        [class.active]="nav.view() === item.view"
+        (click)="nav.show(item.view)"
+      >
+        <mat-icon>{{ item.icon }}</mat-icon>
+        <span>{{ item.label }}</span>
+      </button>
+    }
+  </nav>
+
+  <span class="grow"></span>
+
+  <div class="import">
+    <button matButton="filled" class="import-btn" (click)="library.pickFiles()">
+      <mat-icon>add</mat-icon>
+      Add Music
+    </button>
+    <button matButton class="import-folder" (click)="library.pickFolder()">
+      <mat-icon>folder_open</mat-icon>
+      Import Folder
+    </button>
+    @if (library.hasMusic()) {
+      <p class="lib-count">{{ library.tracks().length }} songs</p>
+    }
+  </div>
+</aside>

@@ -1,0 +1,204 @@
+@if (!lib.hasMusic()) {
+  <!-- ---- Empty state ---- -->
+  <div class="empty">
+    <div class="empty-card">
+      <div class="empty-icon"><mat-icon>library_music</mat-icon></div>
+      <h2>Your Library is empty</h2>
+      <p>Add songs from your computer to start listening.</p>
+      <div class="empty-actions">
+        <button matButton="filled" class="cta" (click)="lib.pickFiles()">
+          <mat-icon>add</mat-icon> Add Music
+        </button>
+        <button matButton class="cta-ghost" (click)="lib.pickFolder()">
+          <mat-icon>folder_open</mat-icon> Import Folder
+        </button>
+      </div>
+      <p class="hint">or drag &amp; drop audio files anywhere</p>
+    </div>
+  </div>
+} @else {
+  <!-- ---- Header ---- -->
+  <header class="view-header">
+    @if (nav.openAlbum(); as album) {
+      <button matIconButton class="back" aria-label="Back" (click)="nav.closeAlbumDetail()">
+        <mat-icon>arrow_back_ios_new</mat-icon>
+      </button>
+      <h1 class="view-title">{{ album.name }}</h1>
+    } @else {
+      <h1 class="view-title">{{ heading() }}</h1>
+      @if (lib.importing()) {
+        <span class="importing">
+          <mat-icon class="spin">autorenew</mat-icon>
+          Importing {{ lib.importDone() }}/{{ lib.importTotal() }}
+        </span>
+      }
+      <span class="grow"></span>
+      @if (nav.view() === 'songs' && filteredSongs().length) {
+        <button matButton="filled" class="hdr-btn" (click)="playAllSongs()">
+          <mat-icon>play_arrow</mat-icon> Play
+        </button>
+        <button matButton class="hdr-ghost" (click)="shuffleSongs()">
+          <mat-icon>shuffle</mat-icon> Shuffle
+        </button>
+      }
+    }
+  </header>
+
+  <!-- ---- Body ---- -->
+  <div class="view-body">
+    @if (nav.openAlbum(); as album) {
+      <!-- Album detail -->
+      <section class="album-detail">
+        <div class="detail-head">
+          <div class="detail-cover">
+            @if (album.artworkUrl) {
+              <img [src]="album.artworkUrl" [alt]="album.name" />
+            } @else {
+              <mat-icon>album</mat-icon>
+            }
+          </div>
+          <div class="detail-meta">
+            <span class="d-kicker">Album</span>
+            <h2 class="d-name">{{ album.name }}</h2>
+            <p class="d-artist">{{ album.artist }}</p>
+            <p class="d-sub">
+              @if (album.year) {
+                {{ album.year }} ·
+              }
+              {{ album.tracks.length }} {{ album.tracks.length === 1 ? 'song' : 'songs' }}
+            </p>
+            <div class="d-actions">
+              <button matButton="filled" class="cta" (click)="playAlbum(album)">
+                <mat-icon>play_arrow</mat-icon> Play
+              </button>
+              <button matButton class="cta-ghost" (click)="playAlbum(album, true)">
+                <mat-icon>shuffle</mat-icon> Shuffle
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-tracks">
+          @for (track of album.tracks; track track.id; let i = $index) {
+            <div
+              class="d-track"
+              [class.current]="isCurrent(track)"
+              (dblclick)="playSong(track, album.tracks)"
+            >
+              <span class="d-num">
+                <span class="num">{{ track.trackNo || i + 1 }}</span>
+                <button class="row-play" aria-label="Play" (click)="playSong(track, album.tracks)">
+                  <mat-icon>{{
+                    isCurrent(track) && player.isPlaying() ? 'graphic_eq' : 'play_arrow'
+                  }}</mat-icon>
+                </button>
+              </span>
+              <span class="d-title">{{ track.title }}</span>
+              <span class="d-time">{{ track.duration | duration }}</span>
+            </div>
+          }
+        </div>
+      </section>
+    } @else {
+      @switch (nav.view()) {
+        <!-- Albums grid -->
+        @case ('albums') {
+          <div class="album-grid">
+            @for (album of lib.albums(); track album.id) {
+              <button class="album-card" (click)="openAlbum(album)">
+                <div class="cover">
+                  @if (album.artworkUrl) {
+                    <img [src]="album.artworkUrl" [alt]="album.name" />
+                  } @else {
+                    <mat-icon>album</mat-icon>
+                  }
+                  <span
+                    class="cover-play"
+                    aria-label="Play album"
+                    (click)="$event.stopPropagation(); playAlbum(album)"
+                  >
+                    <mat-icon>play_arrow</mat-icon>
+                  </span>
+                </div>
+                <span class="album-name">{{ album.name }}</span>
+                <span class="album-artist">{{ album.artist }}</span>
+              </button>
+            }
+          </div>
+        }
+
+        <!-- Artists list -->
+        @case ('artists') {
+          <div class="artist-list">
+            @for (artist of lib.artists(); track artist.id) {
+              <button class="artist-row" (click)="playArtist(artist)">
+                <span class="artist-avatar">
+                  @if (artist.artworkUrl) {
+                    <img [src]="artist.artworkUrl" [alt]="artist.name" />
+                  } @else {
+                    <mat-icon>person</mat-icon>
+                  }
+                </span>
+                <span class="artist-info">
+                  <span class="a-name">{{ artist.name }}</span>
+                  <span class="a-sub">
+                    {{ artist.tracks.length }} {{ artist.tracks.length === 1 ? 'song' : 'songs' }} ·
+                    {{ artist.albumCount }} {{ artist.albumCount === 1 ? 'album' : 'albums' }}
+                  </span>
+                </span>
+                <mat-icon class="a-play">play_circle</mat-icon>
+              </button>
+            }
+          </div>
+        }
+
+        <!-- Songs table -->
+        @default {
+          <div class="song-table">
+            <div class="song-row head">
+              <span class="col-index">#</span>
+              <span class="col-title">Title</span>
+              <span class="col-artist">Artist</span>
+              <span class="col-album">Album</span>
+              <span class="col-time"><mat-icon>schedule</mat-icon></span>
+            </div>
+            @for (track of filteredSongs(); track track.id; let i = $index) {
+              <div
+                class="song-row"
+                [class.current]="isCurrent(track)"
+                (dblclick)="playSong(track, filteredSongs())"
+              >
+                <span class="col-index">
+                  <span class="idx">{{ i + 1 }}</span>
+                  <button class="row-play" aria-label="Play" (click)="playSong(track, filteredSongs())">
+                    <mat-icon>{{
+                      isCurrent(track) && player.isPlaying() ? 'graphic_eq' : 'play_arrow'
+                    }}</mat-icon>
+                  </button>
+                </span>
+                <span class="col-title">
+                  <span class="art-sm">
+                    @if (track.artworkUrl) {
+                      <img [src]="track.artworkUrl" [alt]="track.album" />
+                    } @else {
+                      <mat-icon>music_note</mat-icon>
+                    }
+                  </span>
+                  <span class="t-name">{{ track.title }}</span>
+                </span>
+                <span class="col-artist">{{ track.artist }}</span>
+                <span class="col-album">{{ track.album }}</span>
+                <span class="col-time">{{ track.duration | duration }}</span>
+              </div>
+            } @empty {
+              <div class="no-results">
+                <mat-icon>search_off</mat-icon>
+                <p>No songs match “{{ nav.search() }}”.</p>
+              </div>
+            }
+          </div>
+        }
+      }
+    }
+  </div>
+}
