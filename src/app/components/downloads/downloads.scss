@@ -262,6 +262,17 @@
       color: var(--text-primary);
     }
   }
+
+  .muted {
+    color: var(--text-tertiary);
+  }
+
+  .job-sub {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: var(--apple-red);
+    word-break: break-word;
+  }
 }
 
 .job:not(.error) .job-top:has(+ mat-progress-bar) {

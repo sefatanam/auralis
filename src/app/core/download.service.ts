@@ -20,6 +20,7 @@ export type JobStatus = 'downloading' | 'importing' | 'done' | 'error';
 export interface DownloadJob {
   readonly id: string;
   url: string;
+  title: string;
   percent: number;
   message: string;
   status: JobStatus;
@@ -82,7 +83,7 @@ export class DownloadService {
     if (!url || !IS_TAURI) return;
 
     const id = crypto.randomUUID();
-    this.add({ id, url, percent: 0, message: 'Starting…', status: 'downloading' });
+    this.add({ id, url, title: '', percent: 0, message: 'Preparing…', status: 'downloading' });
 
     // ponytail: one global progress event; concurrent downloads would cross-update.
     // Per-job event names if simultaneous downloads ever matter.
@@ -91,8 +92,10 @@ export class DownloadService {
       'download-progress',
       (e) => {
         const { percent, message } = e.payload;
+        const title = this.deriveTitle(message);
         this.patch(id, {
           message,
+          ...(title ? { title } : {}),
           ...(percent >= 0 ? { percent } : {}),
         });
       },
@@ -100,14 +103,33 @@ export class DownloadService {
 
     try {
       const files = await invoke<DownloadedFile[]>('download_audio', { url });
-      this.patch(id, { percent: 100, status: 'importing', message: 'Importing…' });
+      const title = this.stem(files[0]?.name) || 'Download';
+      this.patch(id, { percent: 100, status: 'importing', title, message: 'Importing…' });
       await this.importFiles(files);
-      this.patch(id, { status: 'done', message: `${files.length} track(s) added` });
+      this.patch(id, {
+        status: 'done',
+        title,
+        message: files.length > 1 ? `${files.length} tracks added` : 'Added to library',
+      });
     } catch (err) {
       this.patch(id, { status: 'error', message: String(err) });
     } finally {
       unlisten();
     }
+  }
+
+  /** Pull a readable title from a yt-dlp "Destination: …/Title.f251.webm" line. */
+  private deriveTitle(message: string): string | null {
+    const m = message.match(/Destination:\s*(.+)$/);
+    if (!m) return null;
+    const base = m[1].split(/[/\\]/).pop() ?? '';
+    return this.stem(base) || null;
+  }
+
+  /** Strip a file extension and any yt-dlp format id (".f251"). */
+  private stem(name: string | undefined): string {
+    if (!name) return '';
+    return name.replace(/\.[a-z0-9]{1,4}$/i, '').replace(/\.f\d+$/i, '');
   }
 
   async installTools(): Promise<void> {

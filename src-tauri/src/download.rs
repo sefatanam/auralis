@@ -6,8 +6,6 @@ use std::process::{Command, Stdio};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
 
-const AUDIO_EXTS: [&str; 6] = ["mp3", "m4a", "flac", "wav", "aac", "ogg"];
-
 #[derive(Serialize)]
 pub struct ToolStatus {
     yt_dlp: bool,
@@ -80,24 +78,6 @@ pub fn download_dir(app: AppHandle) -> Result<String, String> {
     Ok(target_dir(&app)?.to_string_lossy().to_string())
 }
 
-fn is_audio(path: &PathBuf) -> bool {
-    path.extension()
-        .and_then(|e| e.to_str())
-        .map(|e| AUDIO_EXTS.contains(&e.to_lowercase().as_str()))
-        .unwrap_or(false)
-}
-
-/// Snapshot of audio file names currently in `dir`.
-fn snapshot(dir: &PathBuf) -> HashSet<PathBuf> {
-    std::fs::read_dir(dir)
-        .map(|rd| {
-            rd.filter_map(|e| e.ok().map(|e| e.path()))
-                .filter(is_audio)
-                .collect()
-        })
-        .unwrap_or_default()
-}
-
 /// Parse a yt-dlp `[download]  42.3% ...` line into a percent.
 fn parse_percent(line: &str) -> Option<f64> {
     if !line.contains("[download]") {
@@ -108,11 +88,17 @@ fn parse_percent(line: &str) -> Option<f64> {
         .and_then(|t| t.trim_end_matches('%').parse::<f64>().ok())
 }
 
-/// Download audio (single track or full playlist) from `url` using yt-dlp into
-/// an app-managed folder. Streams `download-progress` events and returns the
-/// newly created audio files. Runs on Tauri's blocking command thread pool.
+/// Download audio (single track or full playlist) from `url` using yt-dlp.
+/// Async so the blocking work runs off the main thread — otherwise progress
+/// events wouldn't reach the UI until the whole download finished.
 #[tauri::command]
-pub fn download_audio(app: AppHandle, url: String) -> Result<Vec<DownloadedFile>, String> {
+pub async fn download_audio(app: AppHandle, url: String) -> Result<Vec<DownloadedFile>, String> {
+    tauri::async_runtime::spawn_blocking(move || download_blocking(app, url))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+fn download_blocking(app: AppHandle, url: String) -> Result<Vec<DownloadedFile>, String> {
     let yt_dlp = resolve_bin("yt-dlp").ok_or("yt-dlp is not installed")?;
     if resolve_bin("ffmpeg").is_none() {
         return Err("ffmpeg is not installed".into());
@@ -121,7 +107,14 @@ pub fn download_audio(app: AppHandle, url: String) -> Result<Vec<DownloadedFile>
     let dir = target_dir(&app)?;
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
 
-    let before = snapshot(&dir);
+    // yt-dlp writes the final path of every produced file here (after post-
+    // processing). Reliable for playlists and re-downloads, where a folder diff
+    // would miss files that already existed.
+    let nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
+    let list_path = std::env::temp_dir().join(format!("ngmusic-{nanos}.txt"));
     let output_template = dir.join("%(title)s.%(ext)s");
 
     let mut child = Command::new(&yt_dlp)
@@ -140,8 +133,11 @@ pub fn download_audio(app: AppHandle, url: String) -> Result<Vec<DownloadedFile>
             // or try another client here (tv, ios, mweb).
             "--extractor-args",
             "youtube:player_client=web_safari,default",
-            "-o",
+            "--print-to-file",
+            "after_move:filepath",
         ])
+        .arg(&list_path)
+        .arg("-o")
         .arg(&output_template)
         .arg(&url)
         .stdout(Stdio::piped())
@@ -168,20 +164,29 @@ pub fn download_audio(app: AppHandle, url: String) -> Result<Vec<DownloadedFile>
             use std::io::Read;
             let _ = se.read_to_string(&mut err);
         }
+        let _ = std::fs::remove_file(&list_path);
         let msg = err.lines().last().unwrap_or("yt-dlp failed").to_string();
         return Err(msg);
     }
 
-    let after = snapshot(&dir);
-    let mut files: Vec<DownloadedFile> = after
-        .difference(&before)
-        .map(|p| DownloadedFile {
-            name: p
-                .file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or("")
-                .to_string(),
-            path: p.to_string_lossy().to_string(),
+    let listed = std::fs::read_to_string(&list_path).unwrap_or_default();
+    let _ = std::fs::remove_file(&list_path);
+
+    let mut seen = HashSet::new();
+    let mut files: Vec<DownloadedFile> = listed
+        .lines()
+        .map(str::trim)
+        .filter(|l| !l.is_empty() && seen.insert(l.to_string()))
+        .map(|p| {
+            let path = PathBuf::from(p);
+            DownloadedFile {
+                name: path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("")
+                    .to_string(),
+                path: p.to_string(),
+            }
         })
         .collect();
     files.sort_by(|a, b| a.name.cmp(&b.name));
@@ -242,13 +247,5 @@ mod tests {
     fn ignores_non_progress_lines() {
         assert_eq!(parse_percent("[youtube] Extracting URL"), None);
         assert_eq!(parse_percent("[ExtractAudio] Destination: song.mp3"), None);
-    }
-
-    #[test]
-    fn detects_audio_by_extension() {
-        assert!(is_audio(&PathBuf::from("a/b/song.mp3")));
-        assert!(is_audio(&PathBuf::from("song.M4A")));
-        assert!(!is_audio(&PathBuf::from("cover.jpg")));
-        assert!(!is_audio(&PathBuf::from("noext")));
     }
 }

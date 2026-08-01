@@ -77,10 +77,14 @@
     @for (job of svc.jobs(); track job.id) {
       <div class="job" [class.error]="job.status === 'error'">
         <div class="job-top">
-          <span class="job-title" [title]="job.url">{{ job.message }}</span>
+          <span class="job-title" [title]="job.url">
+            {{ job.title || (job.status === 'error' ? 'Download failed' : 'Preparing…') }}
+          </span>
           <span class="job-meta">
             @if (job.status === 'downloading') {
               {{ job.percent | number: '1.0-0' }}%
+            } @else if (job.status === 'importing') {
+              <span class="muted">Importing…</span>
             } @else if (job.status === 'done') {
               <mat-icon class="ok">check_circle</mat-icon>
             } @else if (job.status === 'error') {
@@ -91,9 +95,11 @@
             </button>
           </span>
         </div>
-        @if (job.status === 'downloading' || job.status === 'importing') {
+        @if (job.status === 'error') {
+          <p class="job-sub">{{ job.message }}</p>
+        } @else if (job.status === 'downloading' || job.status === 'importing') {
           <mat-progress-bar
-            [mode]="job.status === 'importing' ? 'indeterminate' : 'determinate'"
+            [mode]="job.status === 'importing' || job.percent <= 0 ? 'indeterminate' : 'determinate'"
             [value]="job.percent"
           />
         }
