@@ -1,22 +1,26 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSliderModule } from '@angular/material/slider';
 import { PlayerService } from '../../core/player.service';
 import { NavService } from '../../core/nav.service';
 import { DurationPipe } from '../../core/duration.pipe';
+import { coverGradient } from '../../core/cover';
 import { Cover } from '../cover/cover';
 
+/** Full-screen "Now Playing" page: big artwork, transport, and a lyrics/queue panel. */
 @Component({
-  selector: 'app-player-bar',
+  selector: 'app-now-playing',
   imports: [MatButtonModule, MatIconModule, MatSliderModule, DurationPipe, Cover],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './player-bar.html',
-  styleUrl: './player-bar.scss',
+  templateUrl: './now-playing.html',
+  styleUrl: './now-playing.scss',
+  host: { '(document:keydown.escape)': 'nav.closeNowPlaying()' },
 })
-export class PlayerBar {
+export class NowPlaying {
   protected readonly player = inject(PlayerService);
   protected readonly nav = inject(NavService);
+  protected readonly panel = signal<'lyrics' | 'queue'>('lyrics');
 
   protected readonly remaining = computed(() =>
     Math.max(0, this.player.duration() - this.player.currentTime()),
@@ -29,7 +33,13 @@ export class PlayerBar {
     return 'volume_up';
   });
 
-  /** Click or drag anywhere on the progress bar to seek. */
+  /** Blurred background: the cover art if present, else the generated gradient. */
+  protected readonly backdrop = computed(() => {
+    const t = this.player.currentTrack();
+    if (t?.artworkUrl) return `url("${t.artworkUrl}")`;
+    return coverGradient(t?.album || t?.title || 'Music');
+  });
+
   protected startScrub(event: PointerEvent, bar: HTMLElement): void {
     event.preventDefault();
     this.seekTo(event, bar);
@@ -48,7 +58,6 @@ export class PlayerBar {
 
   private seekTo(event: PointerEvent, bar: HTMLElement): void {
     const rect = bar.getBoundingClientRect();
-    const fraction = (event.clientX - rect.left) / rect.width;
-    this.player.seekFraction(Math.min(1, Math.max(0, fraction)));
+    this.player.seekFraction(Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width)));
   }
 }

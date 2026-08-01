@@ -1,19 +1,22 @@
 :host {
   display: grid;
   grid-template-columns: var(--sidebar-width) 1fr;
-  grid-template-rows: var(--topbar-height) 1fr;
-  grid-template-areas:
-    'topbar topbar'
-    'sidebar content';
+  grid-template-rows: 1fr;
+  grid-template-areas: 'sidebar content';
   height: 100vh;
   width: 100vw;
   overflow: hidden;
   background: var(--app-bg);
 }
 
-.shell-topbar {
-  grid-area: topbar;
-  z-index: 20;
+/* Floating player pill — sits over the content, not in the grid flow. */
+.shell-player {
+  position: fixed;
+  left: calc(var(--sidebar-width) + 16px);
+  right: 16px;
+  bottom: 14px;
+  height: var(--player-height);
+  z-index: 40;
 }
 
 .shell-sidebar {

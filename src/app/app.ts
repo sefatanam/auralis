@@ -1,13 +1,15 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { LibraryService } from './core/library.service';
+import { NavService } from './core/nav.service';
 import { PlayerBar } from './components/player-bar/player-bar';
 import { Sidebar } from './components/sidebar/sidebar';
 import { Library } from './components/library/library';
+import { NowPlaying } from './components/now-playing/now-playing';
 
 @Component({
   selector: 'app-root',
-  imports: [MatIconModule, PlayerBar, Sidebar, Library],
+  imports: [MatIconModule, PlayerBar, Sidebar, Library, NowPlaying],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.html',
   styleUrl: './app.scss',
@@ -19,6 +21,7 @@ import { Library } from './components/library/library';
 })
 export class App {
   private readonly library = inject(LibraryService);
+  protected readonly nav = inject(NavService);
   protected readonly dragging = signal(false);
 
   constructor() {

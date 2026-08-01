@@ -9,10 +9,20 @@ export class NavService {
   readonly openAlbum = signal<Album | null>(null);
   /** Free-text search applied to the songs view. */
   readonly search = signal<string>('');
+  /** Whether the full-screen Now Playing page is open. */
+  readonly nowPlaying = signal(false);
 
   show(view: LibraryView): void {
     this.openAlbum.set(null);
     this.view.set(view);
+  }
+
+  openNowPlaying(): void {
+    this.nowPlaying.set(true);
+  }
+
+  closeNowPlaying(): void {
+    this.nowPlaying.set(false);
   }
 
   openAlbumDetail(album: Album): void {

@@ -1,0 +1,108 @@
+<div class="np">
+  <div class="np-backdrop" [style.background]="backdrop()"></div>
+
+  <header class="np-top">
+    <button matIconButton class="np-close" aria-label="Close Now Playing" (click)="nav.closeNowPlaying()">
+      <mat-icon>keyboard_arrow_down</mat-icon>
+    </button>
+    <span class="grow"></span>
+    <div class="np-vol">
+      <button matIconButton aria-label="Mute" (click)="player.toggleMute()">
+        <mat-icon>{{ volumeIcon() }}</mat-icon>
+      </button>
+      <mat-slider class="volume" [min]="0" [max]="100" [step]="1" [discrete]="false">
+        <input
+          matSliderThumb
+          [value]="player.effectiveVolume() * 100"
+          (valueChange)="onVolume($event)"
+          aria-label="Volume"
+        />
+      </mat-slider>
+    </div>
+  </header>
+
+  <div class="np-body">
+    <!-- Left: artwork + controls -->
+    <section class="np-main">
+      <div class="np-art">
+        @if (player.currentTrack(); as t) {
+          <app-cover [src]="t.artworkUrl" [name]="t.album || t.title" />
+        } @else {
+          <app-cover name="Music" />
+        }
+      </div>
+
+      <div class="np-info">
+        @if (player.currentTrack(); as t) {
+          <h1 class="np-title">{{ t.title }}</h1>
+          <p class="np-artist">{{ t.artist }}</p>
+        } @else {
+          <h1 class="np-title muted">Not Playing</h1>
+        }
+      </div>
+
+      <div class="np-scrub">
+        <span class="time">{{ player.currentTime() | duration }}</span>
+        <div class="scrub-track" (pointerdown)="startScrub($event, bar)" #bar>
+          <div class="scrub-fill" [style.width.%]="player.progress() * 100">
+            <span class="scrub-knob"></span>
+          </div>
+        </div>
+        <span class="time">{{ player.hasTrack() ? '-' + (remaining() | duration) : '--:--' }}</span>
+      </div>
+
+      <div class="np-transport">
+        <button matIconButton class="ctl" [class.on]="player.shuffle()" aria-label="Shuffle" (click)="player.toggleShuffle()">
+          <mat-icon>shuffle</mat-icon>
+        </button>
+        <button matIconButton class="ctl" aria-label="Previous" (click)="player.previous()">
+          <mat-icon>skip_previous</mat-icon>
+        </button>
+        <button matIconButton class="ctl play" [attr.aria-label]="player.isPlaying() ? 'Pause' : 'Play'" (click)="player.togglePlay()">
+          <mat-icon>{{ player.isPlaying() ? 'pause' : 'play_arrow' }}</mat-icon>
+        </button>
+        <button matIconButton class="ctl" aria-label="Next" (click)="player.next()">
+          <mat-icon>skip_next</mat-icon>
+        </button>
+        <button matIconButton class="ctl" [class.on]="player.repeat() !== 'off'" aria-label="Repeat" (click)="player.cycleRepeat()">
+          <mat-icon>{{ player.repeat() === 'one' ? 'repeat_one' : 'repeat' }}</mat-icon>
+        </button>
+      </div>
+    </section>
+
+    <!-- Right: lyrics / up-next panel -->
+    <aside class="np-panel">
+      <div class="np-panel-content">
+        @if (panel() === 'lyrics') {
+          <p class="np-empty">
+            {{ player.hasTrack() ? "Lyrics aren’t available for this song." : 'Play a song to see lyrics here.' }}
+          </p>
+        } @else {
+          @if (player.upNext().length) {
+            <p class="np-panel-title">Playing Next</p>
+            @for (t of player.upNext(); track t.id) {
+              <div class="np-q">
+                <span class="np-q-art"><app-cover [src]="t.artworkUrl" [name]="t.album || t.title" /></span>
+                <span class="np-q-info">
+                  <span class="np-q-title">{{ t.title }}</span>
+                  <span class="np-q-artist">{{ t.artist }}</span>
+                </span>
+              </div>
+            }
+          } @else {
+            <p class="np-empty">Nothing in the queue.</p>
+          }
+        }
+      </div>
+
+      <div class="np-panel-toggle">
+        <button matIconButton [class.on]="panel() === 'lyrics'" aria-label="Lyrics" (click)="panel.set('lyrics')">
+          <mat-icon>lyrics</mat-icon>
+        </button>
+        <button matIconButton [class.on]="panel() === 'queue'" aria-label="Playing Next" (click)="panel.set('queue')">
+          <mat-icon>queue_music</mat-icon>
+        </button>
+      </div>
+    </aside>
+  </div>
+</div>

@@ -6,10 +6,11 @@ import { NavService } from '../../core/nav.service';
 import { PlayerService } from '../../core/player.service';
 import { DurationPipe } from '../../core/duration.pipe';
 import { Album, Artist, Track } from '../../core/models';
+import { Cover } from '../cover/cover';
 
 @Component({
   selector: 'app-library',
-  imports: [MatButtonModule, MatIconModule, DurationPipe],
+  imports: [MatButtonModule, MatIconModule, DurationPipe, Cover],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './library.html',
   styleUrl: './library.scss',

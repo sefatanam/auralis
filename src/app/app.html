@@ -1,8 +1,12 @@
-<app-player-bar class="shell-topbar" />
 <app-sidebar class="shell-sidebar" />
 <main class="shell-content">
   <app-library />
 </main>
+<app-player-bar class="shell-player" />
+
+@if (nav.nowPlaying()) {
+  <app-now-playing />
+}
 
 @if (dragging()) {
   <div class="drop-overlay">

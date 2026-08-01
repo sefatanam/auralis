@@ -27,6 +27,8 @@ export class PlayerService {
   });
   readonly hasTrack = computed(() => this.currentTrack() !== null);
   readonly effectiveVolume = computed(() => (this.muted() ? 0 : this.volume()));
+  /** Tracks queued after the current one (for the Now Playing queue panel). */
+  readonly upNext = computed(() => this.queue().slice(this.index() + 1));
 
   constructor() {
     const a = this.audio;

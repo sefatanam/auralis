@@ -38,19 +38,15 @@
   <!-- Now-playing LCD -->
   <div class="lcd">
     @if (player.currentTrack(); as track) {
-      <div class="art">
-        @if (track.artworkUrl) {
-          <img [src]="track.artworkUrl" [alt]="track.album" />
-        } @else {
-          <mat-icon>music_note</mat-icon>
-        }
-      </div>
+      <button class="art" aria-label="Open Now Playing" (click)="nav.openNowPlaying()">
+        <app-cover [src]="track.artworkUrl" [name]="track.album || track.title" />
+      </button>
       <div class="lcd-body">
-        <div class="meta">
+        <button class="meta" (click)="nav.openNowPlaying()">
           <span class="title">{{ track.title }}</span>
           <span class="dash">—</span>
           <span class="artist">{{ track.artist }}</span>
-        </div>
+        </button>
         <div class="scrub">
           <span class="time">{{ player.currentTime() | duration }}</span>
           <div class="scrub-track" (pointerdown)="startScrub($event, track_bar)" #track_bar>
@@ -63,9 +59,11 @@
         </div>
       </div>
     } @else {
-      <div class="art empty"><mat-icon>music_note</mat-icon></div>
+      <button class="art empty" aria-label="Open Now Playing" (click)="nav.openNowPlaying()">
+        <mat-icon>music_note</mat-icon>
+      </button>
       <div class="lcd-body">
-        <div class="meta placeholder">Not Playing</div>
+        <button class="meta placeholder" (click)="nav.openNowPlaying()">Not Playing</button>
         <div class="scrub">
           <span class="time">--:--</span>
           <div class="scrub-track"><div class="scrub-buffer"></div></div>
@@ -75,8 +73,14 @@
     }
   </div>
 
-  <!-- Volume -->
+  <!-- Lyrics / queue / volume -->
   <div class="extras">
+    <button matIconButton class="ctl" aria-label="Lyrics" (click)="nav.openNowPlaying()">
+      <mat-icon>lyrics</mat-icon>
+    </button>
+    <button matIconButton class="ctl hide-sm" aria-label="Playing Next" (click)="nav.openNowPlaying()">
+      <mat-icon>queue_music</mat-icon>
+    </button>
     <button matIconButton class="ctl" aria-label="Mute" (click)="player.toggleMute()">
       <mat-icon>{{ volumeIcon() }}</mat-icon>
     </button>
