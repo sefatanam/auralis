@@ -1,0 +1,337 @@
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: block;
+}
+
+.np {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: light-dark(#e9e9ee, #1a1a1c);
+  color: var(--text-primary);
+  animation: np-rise 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes np-rise {
+  from {
+    opacity: 0;
+    transform: translateY(2%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Blurred artwork wash behind everything */
+.np-backdrop {
+  position: absolute;
+  inset: -10%;
+  background-size: cover !important;
+  background-position: center !important;
+  filter: blur(70px) saturate(150%);
+  transform: scale(1.15);
+  opacity: light-dark(0.55, 0.42);
+  pointer-events: none;
+}
+.np::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: light-dark(rgba(233, 233, 238, 0.35), rgba(18, 18, 20, 0.5));
+  pointer-events: none;
+}
+
+.grow {
+  flex: 1 1 auto;
+}
+
+/* Flat controls: no sticky grey hover/focus disc, keyboard focus ring kept. */
+.np .mat-mdc-icon-button {
+  .mat-mdc-button-persistent-ripple::before {
+    display: none;
+  }
+  &:focus-visible {
+    outline: 2px solid var(--apple-red);
+    outline-offset: -3px;
+    border-radius: 50%;
+  }
+}
+
+/* Top bar: close + volume */
+.np-top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 60px;
+  padding: 0 20px;
+  /* leave room for the traffic lights in the Tauri window */
+  padding-left: 96px;
+}
+.np-close.np-close {
+  color: var(--text-primary);
+  background: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.14));
+  mat-icon {
+    font-size: 26px;
+    width: 26px;
+    height: 26px;
+  }
+}
+.np-vol {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.volume.volume {
+  width: 120px;
+  --mat-slider-value-indicator-opacity: 0;
+}
+
+/* Body: two columns */
+.np-body {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 48px;
+  height: calc(100% - 60px);
+  padding: 8px 56px 56px;
+  align-items: center;
+}
+
+/* Left column */
+.np-main {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 520px;
+  min-width: 0;
+  margin-left: auto;
+}
+.np-art {
+  width: 100%;
+  max-width: 380px;
+  aspect-ratio: 1;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+.np-info {
+  margin: 28px 2px 0;
+  min-width: 0;
+}
+.np-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-primary);
+
+  &.muted {
+    color: var(--text-secondary);
+  }
+}
+.np-artist {
+  margin: 4px 0 0;
+  font-size: 18px;
+  color: var(--apple-red);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Scrubber (mirrors the player pill) */
+.np-scrub {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 22px 2px 0;
+}
+.time {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+  min-width: 40px;
+  text-align: center;
+  flex: none;
+}
+.scrub-track {
+  position: relative;
+  flex: 1 1 auto;
+  height: 16px;
+  cursor: pointer;
+  touch-action: none;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 50% 0 auto 0;
+    height: 4px;
+    transform: translateY(-50%);
+    border-radius: 2px;
+    background: var(--track-inactive);
+    transition: height 0.12s ease;
+  }
+}
+.scrub-fill {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 4px;
+  transform: translateY(-50%);
+  border-radius: 2px;
+  background: var(--apple-red);
+  transition: height 0.12s ease;
+}
+.scrub-knob {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+  transform: translate(50%, -50%) scale(0);
+  transition: transform 0.12s ease;
+}
+.scrub-track:hover {
+  &::before,
+  .scrub-fill {
+    height: 6px;
+  }
+  .scrub-knob {
+    transform: translate(50%, -50%) scale(1);
+  }
+}
+
+/* Transport */
+.np-transport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 26px 0 0;
+}
+.ctl.on {
+  color: var(--apple-red);
+}
+.play.play {
+  color: var(--text-primary);
+  mat-icon {
+    font-size: 46px;
+    width: 46px;
+    height: 46px;
+    line-height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  &:hover {
+    color: var(--apple-red);
+  }
+}
+
+/* Right column: lyrics / queue */
+.np-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-width: 460px;
+  min-width: 0;
+  padding: 24px 0;
+}
+.np-panel-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.np-empty {
+  margin: auto 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: -0.01em;
+}
+.np-panel-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+}
+.np-q {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  transition: background 0.12s ease;
+
+  &:hover {
+    background: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.07));
+  }
+}
+.np-q-art {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 6px;
+  overflow: hidden;
+  background: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.08));
+}
+.np-q-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.np-q-title {
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.np-q-artist {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.np-panel-toggle {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  padding-top: 12px;
+
+  .on {
+    color: var(--apple-red);
+  }
+}
+
+/* Narrow: stack, hide the side panel */
+@media (max-width: 860px) {
+  .np-body {
+    grid-template-columns: 1fr;
+    padding: 8px 28px 40px;
+    gap: 20px;
+  }
+  .np-main {
+    margin: 0 auto;
+  }
+  .np-panel {
+    display: none;
+  }
+}

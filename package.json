@@ -1,12 +1,13 @@
 {
-  "name": "ngmusic",
+  "name": "auralis",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "tauri": "tauri"
   },
   "private": true,
   "packageManager": "npm@11.16.0",
@@ -19,6 +20,7 @@
     "@angular/material": "^22.1.0",
     "@angular/platform-browser": "^22.1.0",
     "@angular/router": "^22.1.0",
+    "@tauri-apps/api": "^2.11.1",
     "music-metadata": "^11.14.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
@@ -27,6 +29,7 @@
     "@angular/build": "^22.1.2",
     "@angular/cli": "^22.1.2",
     "@angular/compiler-cli": "^22.1.0",
+    "@tauri-apps/cli": "^2.11.4",
     "jsdom": "^28.0.0",
     "prettier": "^3.8.1",
     "typescript": "~6.0.2",

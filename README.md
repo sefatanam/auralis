@@ -1,4 +1,4 @@
-# Music — an Apple Music–style local player
+# Auralis — an Apple Music–style local player
 
 A desktop-style music player built with **Angular 22** and **Angular Material
 (M3)**, restyled to match the **Apple Music** design language. Import audio
@@ -55,7 +55,7 @@ Open `http://localhost:4200`, then add some songs from your machine.
 
 ```bash
 npm start      # dev server with live reload
-npm run build  # production build → dist/ngmusic
+npm run build  # production build → dist/auralis
 npm test       # unit tests (Vitest)
 ```
 

@@ -51,11 +51,7 @@
       <section class="album-detail">
         <div class="detail-head">
           <div class="detail-cover">
-            @if (album.artworkUrl) {
-              <img [src]="album.artworkUrl" [alt]="album.name" />
-            } @else {
-              <mat-icon>album</mat-icon>
-            }
+            <app-cover [src]="album.artworkUrl" [name]="album.name" />
           </div>
           <div class="detail-meta">
             <span class="d-kicker">Album</span>
@@ -107,11 +103,7 @@
             @for (album of lib.albums(); track album.id) {
               <button class="album-card" (click)="openAlbum(album)">
                 <div class="cover">
-                  @if (album.artworkUrl) {
-                    <img [src]="album.artworkUrl" [alt]="album.name" />
-                  } @else {
-                    <mat-icon>album</mat-icon>
-                  }
+                  <app-cover [src]="album.artworkUrl" [name]="album.name" />
                   <span
                     class="cover-play"
                     aria-label="Play album"
@@ -133,11 +125,7 @@
             @for (artist of lib.artists(); track artist.id) {
               <button class="artist-row" (click)="playArtist(artist)">
                 <span class="artist-avatar">
-                  @if (artist.artworkUrl) {
-                    <img [src]="artist.artworkUrl" [alt]="artist.name" />
-                  } @else {
-                    <mat-icon>person</mat-icon>
-                  }
+                  <app-cover [src]="artist.artworkUrl" [name]="artist.name" />
                 </span>
                 <span class="artist-info">
                   <span class="a-name">{{ artist.name }}</span>
@@ -156,39 +144,31 @@
         @default {
           <div class="song-table">
             <div class="song-row head">
-              <span class="col-index">#</span>
+              <span class="col-play"></span>
               <span class="col-title">Title</span>
+              <span class="col-time"><mat-icon>schedule</mat-icon></span>
               <span class="col-artist">Artist</span>
               <span class="col-album">Album</span>
-              <span class="col-time"><mat-icon>schedule</mat-icon></span>
+              <span class="col-genre">Genre</span>
             </div>
-            @for (track of filteredSongs(); track track.id; let i = $index) {
+            @for (track of filteredSongs(); track track.id) {
               <div
                 class="song-row"
                 [class.current]="isCurrent(track)"
                 (dblclick)="playSong(track, filteredSongs())"
               >
-                <span class="col-index">
-                  <span class="idx">{{ i + 1 }}</span>
+                <span class="col-play">
                   <button class="row-play" aria-label="Play" (click)="playSong(track, filteredSongs())">
                     <mat-icon>{{
                       isCurrent(track) && player.isPlaying() ? 'graphic_eq' : 'play_arrow'
                     }}</mat-icon>
                   </button>
                 </span>
-                <span class="col-title">
-                  <span class="art-sm">
-                    @if (track.artworkUrl) {
-                      <img [src]="track.artworkUrl" [alt]="track.album" />
-                    } @else {
-                      <mat-icon>music_note</mat-icon>
-                    }
-                  </span>
-                  <span class="t-name">{{ track.title }}</span>
-                </span>
+                <span class="col-title">{{ track.title }}</span>
+                <span class="col-time">{{ track.duration | duration }}</span>
                 <span class="col-artist">{{ track.artist }}</span>
                 <span class="col-album">{{ track.album }}</span>
-                <span class="col-time">{{ track.duration | duration }}</span>
+                <span class="col-genre">{{ track.genre }}</span>
               </div>
             } @empty {
               <div class="no-results">

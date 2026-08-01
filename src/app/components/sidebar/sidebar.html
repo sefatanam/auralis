@@ -1,7 +1,7 @@
 <aside class="sidebar">
   <header class="brand">
     <span class="brand-mark"><mat-icon>graphic_eq</mat-icon></span>
-    <span class="brand-name">Music</span>
+    <span class="brand-name">Auralis</span>
     <span class="grow"></span>
     <button matIconButton aria-label="Toggle appearance" (click)="theme.toggle()">
       <mat-icon>{{ theme.mode() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
@@ -29,13 +29,29 @@
     @for (item of items; track item.view) {
       <button
         class="nav-item"
-        [class.active]="nav.view() === item.view"
+        [class.active]="nav.section() === 'library' && nav.view() === item.view"
         (click)="nav.show(item.view)"
       >
         <mat-icon>{{ item.icon }}</mat-icon>
         <span>{{ item.label }}</span>
       </button>
     }
+    <button
+      class="nav-item"
+      [class.active]="nav.section() === 'downloads'"
+      (click)="nav.showDownloads()"
+    >
+      <mat-icon>cloud_download</mat-icon>
+      <span>Download</span>
+    </button>
+    <button
+      class="nav-item"
+      [class.active]="nav.section() === 'settings'"
+      (click)="nav.showSettings()"
+    >
+      <mat-icon>settings</mat-icon>
+      <span>Settings</span>
+    </button>
   </nav>
 
   <span class="grow"></span>
