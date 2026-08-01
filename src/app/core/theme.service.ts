@@ -2,7 +2,7 @@ import { effect, Injectable, signal } from '@angular/core';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
 
-const STORAGE_KEY = 'ngmusic.theme';
+const STORAGE_KEY = 'auralis.theme';
 
 /**
  * Drives the app-wide `color-scheme` via a class on <html>. Apple Music

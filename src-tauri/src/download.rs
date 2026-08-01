@@ -80,7 +80,7 @@ fn config_path(app: &AppHandle) -> Result<PathBuf, String> {
 }
 
 /// The folder downloads are saved to: the user's chosen folder if set, else
-/// the default `<audio dir>/ngmusic`.
+/// the default `<audio dir>/auralis`.
 fn target_dir(app: &AppHandle) -> Result<PathBuf, String> {
     if let Ok(saved) = std::fs::read_to_string(config_path(app)?) {
         let saved = saved.trim();
@@ -92,7 +92,7 @@ fn target_dir(app: &AppHandle) -> Result<PathBuf, String> {
         .path()
         .audio_dir()
         .map_err(|e| e.to_string())?
-        .join("ngmusic"))
+        .join("auralis"))
 }
 
 #[tauri::command]
@@ -205,7 +205,7 @@ fn download_blocking(app: AppHandle, url: String) -> Result<Vec<DownloadedFile>,
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_nanos())
         .unwrap_or(0);
-    let list_path = std::env::temp_dir().join(format!("ngmusic-{nanos}.txt"));
+    let list_path = std::env::temp_dir().join(format!("auralis-{nanos}.txt"));
     let output_template = dir.join("%(title)s.%(ext)s");
 
     let mut child = Command::new(&yt_dlp)

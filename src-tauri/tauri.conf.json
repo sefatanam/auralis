@@ -1,10 +1,10 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "ngmusic",
+  "productName": "Auralis",
   "version": "0.1.0",
-  "identifier": "com.sefatanam.ngmusic",
+  "identifier": "com.sefatanam.auralis",
   "build": {
-    "frontendDist": "../dist/ngmusic/browser",
+    "frontendDist": "../dist/auralis/browser",
     "devUrl": "http://localhost:4200",
     "beforeDevCommand": "npm start",
     "beforeBuildCommand": "npm run build"
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Music",
+        "title": "Auralis",
         "width": 1100,
         "height": 720,
         "minWidth": 800,

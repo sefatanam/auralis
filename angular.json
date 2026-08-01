@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "ngmusic": {
+    "auralis": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -60,10 +60,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "ngmusic:build:production"
+              "buildTarget": "auralis:build:production"
             },
             "development": {
-              "buildTarget": "ngmusic:build:development"
+              "buildTarget": "auralis:build:development"
             }
           },
           "defaultConfiguration": "development"
