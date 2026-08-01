@@ -59,18 +59,56 @@
     <button
       matButton="filled"
       type="submit"
-      [disabled]="!url().trim() || !svc.available || !svc.ready()"
+      [disabled]="!url().trim() || !svc.available || !svc.ready() || probing()"
     >
       <mat-icon>download</mat-icon>
-      Download
+      {{ probing() ? 'Loading…' : 'Download' }}
     </button>
   </form>
+
+  @if (probeError()) {
+    <p class="job-sub" style="color: var(--apple-red)">{{ probeError() }}</p>
+  }
 
   @if (svc.available && svc.location()) {
     <p class="location">
       <mat-icon>folder</mat-icon>
       Saves to <code>{{ svc.location() }}</code>
     </p>
+  }
+
+  @if (pending(); as entries) {
+    <div class="picker-backdrop" (click)="cancelSelection()">
+      <div class="picker" (click)="$event.stopPropagation()">
+        <div class="picker-head">
+          <p class="picker-title">Select tracks — {{ entries.length }} in playlist</p>
+          <button class="dismiss" aria-label="Close" (click)="cancelSelection()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <label class="picker-all">
+          <input type="checkbox" [checked]="allSelected()" (change)="toggleAll()" />
+          Select all
+        </label>
+
+        <div class="picker-list">
+          @for (e of entries; track e.id) {
+            <label class="picker-row">
+              <input type="checkbox" [checked]="e.selected" (change)="toggleEntry(e.id)" />
+              <span class="picker-name" [title]="e.title">{{ e.title || e.url }}</span>
+            </label>
+          }
+        </div>
+
+        <div class="picker-actions">
+          <button matButton (click)="cancelSelection()">Cancel</button>
+          <button matButton="filled" [disabled]="!selectedCount()" (click)="confirmSelection()">
+            Download {{ selectedCount() }}
+          </button>
+        </div>
+      </div>
+    </div>
   }
 
   <div class="jobs">

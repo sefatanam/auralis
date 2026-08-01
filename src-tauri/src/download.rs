@@ -27,6 +27,13 @@ pub struct DownloadedFile {
     name: String,
 }
 
+#[derive(Serialize)]
+pub struct PlaylistEntry {
+    id: String,
+    title: String,
+    url: String,
+}
+
 /// Resolve a binary to an absolute path via a login shell, so it works even
 /// when a bundled macOS app is launched with a stripped PATH (no /opt/homebrew).
 fn resolve_bin(name: &str) -> Option<String> {
@@ -88,6 +95,56 @@ fn parse_percent(line: &str) -> Option<f64> {
         .and_then(|t| t.trim_end_matches('%').parse::<f64>().ok())
 }
 
+/// List the entries of a playlist (or the single video) at `url` without
+/// downloading, so the UI can offer a selection dialog. `--flat-playlist`
+/// keeps this fast — it doesn't resolve each video's formats.
+#[tauri::command]
+pub async fn probe_url(url: String) -> Result<Vec<PlaylistEntry>, String> {
+    tauri::async_runtime::spawn_blocking(move || probe_blocking(url))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+fn probe_blocking(url: String) -> Result<Vec<PlaylistEntry>, String> {
+    let yt_dlp = resolve_bin("yt-dlp").ok_or("yt-dlp is not installed")?;
+    let out = Command::new(&yt_dlp)
+        .args([
+            "--flat-playlist",
+            "--no-warnings",
+            "--print",
+            "%(id)s\t%(title)s\t%(url)s",
+            "--extractor-args",
+            "youtube:player_client=web_safari,default",
+        ])
+        .arg(&url)
+        .output()
+        .map_err(|e| format!("failed to start yt-dlp: {e}"))?;
+
+    if !out.status.success() {
+        let err = String::from_utf8_lossy(&out.stderr);
+        return Err(err.lines().last().unwrap_or("yt-dlp failed").to_string());
+    }
+
+    let text = String::from_utf8_lossy(&out.stdout);
+    Ok(text.lines().filter_map(parse_entry).collect())
+}
+
+/// Parse one `id\ttitle\turl` line from yt-dlp `--print`.
+fn parse_entry(line: &str) -> Option<PlaylistEntry> {
+    let line = line.trim();
+    if line.is_empty() {
+        return None;
+    }
+    let mut parts = line.splitn(3, '\t');
+    let id = parts.next()?.to_string();
+    let title = parts.next().unwrap_or("").to_string();
+    let url = parts.next().unwrap_or("").to_string();
+    if url.is_empty() || url == "NA" {
+        return None;
+    }
+    Some(PlaylistEntry { id, title, url })
+}
+
 /// Download audio (single track or full playlist) from `url` using yt-dlp.
 /// Async so the blocking work runs off the main thread — otherwise progress
 /// events wouldn't reach the UI until the whole download finished.
@@ -125,7 +182,9 @@ fn download_blocking(app: AppHandle, url: String) -> Result<Vec<DownloadedFile>,
             "--audio-quality",
             "192",
             "--newline",
-            "--no-playlist-reverse",
+            // Playlists route through the selection dialog and download one
+            // entry at a time, so every download_audio call is one track.
+            "--no-playlist",
             "--retries",
             "3",
             // ponytail: YouTube 403s the default (android) client; web_safari
@@ -247,5 +306,15 @@ mod tests {
     fn ignores_non_progress_lines() {
         assert_eq!(parse_percent("[youtube] Extracting URL"), None);
         assert_eq!(parse_percent("[ExtractAudio] Destination: song.mp3"), None);
+    }
+
+    #[test]
+    fn parses_playlist_entry() {
+        let e = parse_entry("dQw4\tNever Gonna Give You Up\thttps://youtu.be/dQw4").unwrap();
+        assert_eq!(e.id, "dQw4");
+        assert_eq!(e.title, "Never Gonna Give You Up");
+        assert_eq!(e.url, "https://youtu.be/dQw4");
+        assert!(parse_entry("").is_none());
+        assert!(parse_entry("id\tOnly Title\tNA").is_none());
     }
 }

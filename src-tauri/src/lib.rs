@@ -16,6 +16,7 @@ pub fn run() {
     .invoke_handler(tauri::generate_handler![
       download::check_tools,
       download::download_dir,
+      download::probe_url,
       download::download_audio,
       download::read_file,
       download::install_tools,

@@ -5,7 +5,6 @@ import { MatSliderModule } from '@angular/material/slider';
 import { PlayerService } from '../../core/player.service';
 import { NavService } from '../../core/nav.service';
 import { DurationPipe } from '../../core/duration.pipe';
-import { coverGradient } from '../../core/cover';
 import { Cover } from '../cover/cover';
 
 /** Full-screen "Now Playing" page: big artwork, transport, and a lyrics/queue panel. */
@@ -22,6 +21,9 @@ export class NowPlaying {
   protected readonly nav = inject(NavService);
   protected readonly panel = signal<'lyrics' | 'queue'>('lyrics');
 
+  // ponytail: fixed seed per open so the random background stays stable while the page is up
+  private readonly randomBg = `https://picsum.photos/seed/${Math.floor(Math.random() * 1e9)}/1600/900`;
+
   protected readonly remaining = computed(() =>
     Math.max(0, this.player.duration() - this.player.currentTime()),
   );
@@ -33,11 +35,10 @@ export class NowPlaying {
     return 'volume_up';
   });
 
-  /** Blurred background: the cover art if present, else the generated gradient. */
+  /** Blurred background: the cover art if present, else a random nice photo. */
   protected readonly backdrop = computed(() => {
     const t = this.player.currentTrack();
-    if (t?.artworkUrl) return `url("${t.artworkUrl}")`;
-    return coverGradient(t?.album || t?.title || 'Music');
+    return `url("${t?.artworkUrl || this.randomBg}")`;
   });
 
   protected startScrub(event: PointerEvent, bar: HTMLElement): void {

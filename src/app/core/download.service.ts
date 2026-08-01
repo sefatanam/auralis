@@ -15,6 +15,12 @@ interface DownloadedFile {
   name: string;
 }
 
+export interface PlaylistEntry {
+  id: string;
+  title: string;
+  url: string;
+}
+
 export type JobStatus = 'downloading' | 'importing' | 'done' | 'error';
 
 export interface DownloadJob {
@@ -78,12 +84,26 @@ export class DownloadService {
     this.location.set(dir);
   }
 
-  async download(rawUrl: string): Promise<void> {
+  /** List a playlist's entries (one entry for a single video) without downloading. */
+  async probe(rawUrl: string): Promise<PlaylistEntry[]> {
+    const url = rawUrl.trim();
+    if (!url || !IS_TAURI) return [];
+    return invoke<PlaylistEntry[]>('probe_url', { url });
+  }
+
+  /** Download several tracks one at a time (avoids progress-event cross-talk). */
+  async downloadMany(entries: PlaylistEntry[]): Promise<void> {
+    for (const e of entries) {
+      await this.download(e.url, e.title);
+    }
+  }
+
+  async download(rawUrl: string, knownTitle = ''): Promise<void> {
     const url = rawUrl.trim();
     if (!url || !IS_TAURI) return;
 
     const id = crypto.randomUUID();
-    this.add({ id, url, title: '', percent: 0, message: 'Preparing…', status: 'downloading' });
+    this.add({ id, url, title: knownTitle, percent: 0, message: 'Preparing…', status: 'downloading' });
 
     // ponytail: one global progress event; concurrent downloads would cross-update.
     // Per-job event names if simultaneous downloads ever matter.
@@ -103,7 +123,7 @@ export class DownloadService {
 
     try {
       const files = await invoke<DownloadedFile[]>('download_audio', { url });
-      const title = this.stem(files[0]?.name) || 'Download';
+      const title = this.stem(files[0]?.name) || knownTitle || 'Download';
       this.patch(id, { percent: 100, status: 'importing', title, message: 'Importing…' });
       await this.importFiles(files);
       this.patch(id, {
