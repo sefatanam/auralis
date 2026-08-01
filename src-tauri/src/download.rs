@@ -5,6 +5,7 @@ use std::process::{Command, Stdio};
 
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
+use tauri_plugin_dialog::DialogExt;
 
 #[derive(Serialize)]
 pub struct ToolStatus {
@@ -71,8 +72,22 @@ pub fn check_tools() -> ToolStatus {
     }
 }
 
-/// The folder downloads are saved to: `<audio dir>/ngmusic`.
+/// File holding the user's chosen download folder (one line). Absent = default.
+fn config_path(app: &AppHandle) -> Result<PathBuf, String> {
+    let dir = app.path().app_config_dir().map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    Ok(dir.join("download_dir.txt"))
+}
+
+/// The folder downloads are saved to: the user's chosen folder if set, else
+/// the default `<audio dir>/ngmusic`.
 fn target_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    if let Ok(saved) = std::fs::read_to_string(config_path(app)?) {
+        let saved = saved.trim();
+        if !saved.is_empty() {
+            return Ok(PathBuf::from(saved));
+        }
+    }
     Ok(app
         .path()
         .audio_dir()
@@ -83,6 +98,25 @@ fn target_dir(app: &AppHandle) -> Result<PathBuf, String> {
 #[tauri::command]
 pub fn download_dir(app: AppHandle) -> Result<String, String> {
     Ok(target_dir(&app)?.to_string_lossy().to_string())
+}
+
+/// Open a native folder picker; on selection persist it as the download dir and
+/// return the new path. Returns `None` if the user cancels.
+#[tauri::command]
+pub async fn pick_download_dir(app: AppHandle) -> Result<Option<String>, String> {
+    let picked = tauri::async_runtime::spawn_blocking({
+        let app = app.clone();
+        move || app.dialog().file().blocking_pick_folder()
+    })
+    .await
+    .map_err(|e| e.to_string())?;
+
+    let Some(folder) = picked else {
+        return Ok(None);
+    };
+    let path = folder.to_string();
+    std::fs::write(config_path(&app)?, &path).map_err(|e| e.to_string())?;
+    Ok(Some(download_dir(app)?))
 }
 
 /// Parse a yt-dlp `[download]  42.3% ...` line into a percent.

@@ -27,7 +27,13 @@
     @if (svc.available) {
       <div class="row">
         <span class="row-label">Save location</span>
-        <code class="row-value">{{ svc.location() || '—' }}</code>
+        <span class="row-value deps">
+          <code>{{ svc.location() || '—' }}</code>
+          <button matButton (click)="svc.changeLocation()">
+            <mat-icon>folder_open</mat-icon>
+            Change
+          </button>
+        </span>
       </div>
       <div class="row">
         <span class="row-label">Dependencies</span>

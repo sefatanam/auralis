@@ -84,6 +84,13 @@ export class DownloadService {
     this.location.set(dir);
   }
 
+  /** Open a native folder picker and persist the chosen download location. */
+  async changeLocation(): Promise<void> {
+    if (!IS_TAURI) return;
+    const dir = await invoke<string | null>('pick_download_dir');
+    if (dir) this.location.set(dir);
+  }
+
   /** List a playlist's entries (one entry for a single video) without downloading. */
   async probe(rawUrl: string): Promise<PlaylistEntry[]> {
     const url = rawUrl.trim();

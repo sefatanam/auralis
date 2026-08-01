@@ -3,6 +3,7 @@ mod download;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
+    .plugin(tauri_plugin_dialog::init())
     .setup(|app| {
       if cfg!(debug_assertions) {
         app.handle().plugin(
@@ -16,6 +17,7 @@ pub fn run() {
     .invoke_handler(tauri::generate_handler![
       download::check_tools,
       download::download_dir,
+      download::pick_download_dir,
       download::probe_url,
       download::download_audio,
       download::read_file,
