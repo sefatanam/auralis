@@ -6,10 +6,12 @@ import { PlayerBar } from './components/player-bar/player-bar';
 import { Sidebar } from './components/sidebar/sidebar';
 import { Library } from './components/library/library';
 import { NowPlaying } from './components/now-playing/now-playing';
+import { Downloads } from './components/downloads/downloads';
+import { Settings } from './components/settings/settings';
 
 @Component({
   selector: 'app-root',
-  imports: [MatIconModule, PlayerBar, Sidebar, Library, NowPlaying],
+  imports: [MatIconModule, PlayerBar, Sidebar, Library, NowPlaying, Downloads, Settings],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.html',
   styleUrl: './app.scss',

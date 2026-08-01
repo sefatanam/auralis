@@ -1,6 +1,12 @@
 <app-sidebar class="shell-sidebar" />
 <main class="shell-content">
-  <app-library />
+  @if (nav.section() === 'downloads') {
+    <app-downloads />
+  } @else if (nav.section() === 'settings') {
+    <app-settings />
+  } @else {
+    <app-library />
+  }
 </main>
 <app-player-bar class="shell-player" />
 

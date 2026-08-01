@@ -1,0 +1,108 @@
+<section class="downloads">
+  <header class="head">
+    <h1>Download</h1>
+    <p class="sub">Paste a YouTube song or playlist link to add it to your library.</p>
+  </header>
+
+  @if (!svc.available) {
+    <div class="banner">
+      <mat-icon>info</mat-icon>
+      <div>
+        <p class="banner-title">Desktop app only</p>
+        <p class="banner-sub">Downloading requires the Tauri desktop build.</p>
+      </div>
+    </div>
+  } @else if (!svc.ready()) {
+    <!-- Dependency checklist lives in Settings; only warn here when tools are
+         missing, since downloading can't work without them. -->
+    <div class="deps warn">
+      <div class="deps-head">
+        <p class="deps-title">
+          <mat-icon>warning</mat-icon>
+          Missing dependencies — {{ missingTools().join(', ') }}
+        </p>
+        <button class="recheck" aria-label="Re-check" (click)="svc.refreshTools()">
+          <mat-icon>refresh</mat-icon>
+        </button>
+      </div>
+
+      <div class="deps-actions">
+        @if (svc.brewApplies() && svc.tools()?.brew) {
+          <button
+            matButton="filled"
+            (click)="svc.installTools()"
+            [disabled]="svc.installing()"
+          >
+            <mat-icon>download</mat-icon>
+            {{ svc.installing() ? 'Installing…' : 'Install with Homebrew' }}
+          </button>
+        } @else {
+          <span class="deps-note">{{ installHint() }}</span>
+        }
+      </div>
+      @if (svc.installLog().length) {
+        <pre class="log">{{ svc.installLog().join('\n') }}</pre>
+      }
+    </div>
+  }
+
+  <form class="entry" (submit)="$event.preventDefault(); submit()">
+    <mat-icon class="entry-icon">link</mat-icon>
+    <input
+      class="entry-input"
+      type="text"
+      placeholder="https://youtube.com/watch?v=…"
+      [value]="url()"
+      (input)="url.set($any($event.target).value)"
+      [disabled]="!svc.available || !svc.ready()"
+    />
+    <button
+      matButton="filled"
+      type="submit"
+      [disabled]="!url().trim() || !svc.available || !svc.ready()"
+    >
+      <mat-icon>download</mat-icon>
+      Download
+    </button>
+  </form>
+
+  @if (svc.available && svc.location()) {
+    <p class="location">
+      <mat-icon>folder</mat-icon>
+      Saves to <code>{{ svc.location() }}</code>
+    </p>
+  }
+
+  <div class="jobs">
+    @for (job of svc.jobs(); track job.id) {
+      <div class="job" [class.error]="job.status === 'error'">
+        <div class="job-top">
+          <span class="job-title" [title]="job.url">{{ job.message }}</span>
+          <span class="job-meta">
+            @if (job.status === 'downloading') {
+              {{ job.percent | number: '1.0-0' }}%
+            } @else if (job.status === 'done') {
+              <mat-icon class="ok">check_circle</mat-icon>
+            } @else if (job.status === 'error') {
+              <mat-icon class="bad">error</mat-icon>
+            }
+            <button class="dismiss" aria-label="Dismiss" (click)="svc.dismiss(job.id)">
+              <mat-icon>close</mat-icon>
+            </button>
+          </span>
+        </div>
+        @if (job.status === 'downloading' || job.status === 'importing') {
+          <mat-progress-bar
+            [mode]="job.status === 'importing' ? 'indeterminate' : 'determinate'"
+            [value]="job.percent"
+          />
+        }
+      </div>
+    } @empty {
+      <div class="empty">
+        <mat-icon>cloud_download</mat-icon>
+        <p>No downloads yet.</p>
+      </div>
+    }
+  </div>
+</section>

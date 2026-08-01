@@ -1,0 +1,73 @@
+<section class="settings">
+  <header class="head">
+    <h1>Settings</h1>
+  </header>
+
+  <div class="group">
+    <p class="group-title">Appearance</p>
+    <div class="row">
+      <span class="row-label">Theme</span>
+      <div class="segmented">
+        @for (t of themes; track t.mode) {
+          <button
+            class="seg"
+            [class.active]="theme.mode() === t.mode"
+            (click)="theme.mode.set(t.mode)"
+          >
+            <mat-icon>{{ t.icon }}</mat-icon>
+            {{ t.label }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="group">
+    <p class="group-title">Downloads</p>
+    @if (svc.available) {
+      <div class="row">
+        <span class="row-label">Save location</span>
+        <code class="row-value">{{ svc.location() || '—' }}</code>
+      </div>
+      <div class="row">
+        <span class="row-label">Dependencies</span>
+        <span class="row-value deps">
+          <span class="dep" [class.ok]="svc.tools()?.yt_dlp">
+            <mat-icon>{{ svc.tools()?.yt_dlp ? 'check_circle' : 'cancel' }}</mat-icon>
+            yt-dlp
+          </span>
+          <span class="dep" [class.ok]="svc.tools()?.ffmpeg">
+            <mat-icon>{{ svc.tools()?.ffmpeg ? 'check_circle' : 'cancel' }}</mat-icon>
+            ffmpeg
+          </span>
+          <button matButton (click)="svc.refreshTools()">
+            <mat-icon>refresh</mat-icon>
+            Re-check
+          </button>
+        </span>
+      </div>
+    } @else {
+      <p class="note">Downloading requires the desktop app.</p>
+    }
+  </div>
+
+  <div class="group">
+    <p class="group-title">Library</p>
+    <div class="row">
+      <span class="row-label">Imported songs</span>
+      <span class="row-value">{{ library.tracks().length }}</span>
+    </div>
+    <div class="row">
+      <span class="row-label">Manage</span>
+      <button
+        matButton
+        class="danger"
+        [disabled]="!library.hasMusic()"
+        (click)="library.clear()"
+      >
+        <mat-icon>delete_sweep</mat-icon>
+        Clear library
+      </button>
+    </div>
+  </div>
+</section>

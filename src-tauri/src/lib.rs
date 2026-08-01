@@ -1,3 +1,5 @@
+mod download;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
@@ -11,6 +13,13 @@ pub fn run() {
       }
       Ok(())
     })
+    .invoke_handler(tauri::generate_handler![
+      download::check_tools,
+      download::download_dir,
+      download::download_audio,
+      download::read_file,
+      download::install_tools,
+    ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }
