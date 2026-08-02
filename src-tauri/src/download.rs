@@ -115,11 +115,13 @@ fn target_dir(app: &AppHandle) -> Result<PathBuf, String> {
             return Ok(PathBuf::from(saved));
         }
     }
-    Ok(app
-        .path()
-        .audio_dir()
-        .map_err(|e| e.to_string())?
-        .join("auralis"))
+    // ponytail: desktop → audio dir; mobile → Documents (the folder iOS/Android
+    // expose via Files sharing, so users can drop tracks in).
+    #[cfg(desktop)]
+    let base = app.path().audio_dir().map_err(|e| e.to_string())?;
+    #[cfg(not(desktop))]
+    let base = app.path().document_dir().map_err(|e| e.to_string())?;
+    Ok(base.join("auralis"))
 }
 
 #[tauri::command]
@@ -127,10 +129,47 @@ pub fn download_dir(app: AppHandle) -> Result<String, String> {
     Ok(target_dir(&app)?.to_string_lossy().to_string())
 }
 
+/// List audio files sitting in the download dir — both app downloads and files
+/// the user dropped in via the Files app. Lets the folder act as the library.
+#[tauri::command]
+pub fn list_downloads(app: AppHandle) -> Result<Vec<DownloadedFile>, String> {
+    const AUDIO_EXT: &[&str] = &[
+        "mp3", "m4a", "m4b", "aac", "flac", "wav", "ogg", "oga", "opus", "weba", "webm",
+    ];
+    let dir = target_dir(&app)?;
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+
+    let mut files: Vec<DownloadedFile> = std::fs::read_dir(&dir)
+        .map_err(|e| e.to_string())?
+        .flatten()
+        .map(|e| e.path())
+        .filter(|p| {
+            p.extension()
+                .and_then(|x| x.to_str())
+                .map(|x| AUDIO_EXT.contains(&x.to_ascii_lowercase().as_str()))
+                .unwrap_or(false)
+        })
+        .map(|p| DownloadedFile {
+            name: p.file_name().and_then(|n| n.to_str()).unwrap_or("").to_string(),
+            path: p.to_string_lossy().to_string(),
+        })
+        .collect();
+    files.sort_by(|a, b| a.name.cmp(&b.name));
+    Ok(files)
+}
+
 /// Open a native folder picker; on selection persist it as the download dir and
 /// return the new path. Returns `None` if the user cancels.
 #[tauri::command]
 pub async fn pick_download_dir(app: AppHandle) -> Result<Option<String>, String> {
+    // ponytail: mobile has no arbitrary-folder picker (sandbox); treat as cancel.
+    #[cfg(not(desktop))]
+    {
+        let _ = app;
+        return Ok(None);
+    }
+    #[cfg(desktop)]
+    {
     let picked = tauri::async_runtime::spawn_blocking({
         let app = app.clone();
         move || app.dialog().file().blocking_pick_folder()
@@ -144,6 +183,7 @@ pub async fn pick_download_dir(app: AppHandle) -> Result<Option<String>, String>
     let path = folder.to_string();
     std::fs::write(config_path(&app)?, &path).map_err(|e| e.to_string())?;
     Ok(Some(download_dir(app)?))
+    }
 }
 
 /// Parse a yt-dlp `[download]  42.3% ...` line into a percent.
