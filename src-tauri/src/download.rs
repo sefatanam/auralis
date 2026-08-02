@@ -7,6 +7,23 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_dialog::DialogExt;
 
+/// Build a `Command` that never flashes a console window on Windows. Without
+/// CREATE_NO_WINDOW every spawn (where/yt-dlp/ffmpeg) pops a black console that
+/// steals focus — the visible "lag" on Windows.
+fn command(program: &str) -> Command {
+    let cmd = Command::new(program);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        let mut cmd = cmd;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+        return cmd;
+    }
+    #[cfg(not(windows))]
+    cmd
+}
+
 #[derive(Serialize)]
 pub struct ToolStatus {
     yt_dlp: bool,
@@ -39,14 +56,14 @@ pub struct PlaylistEntry {
 /// when a bundled macOS app is launched with a stripped PATH (no /opt/homebrew).
 fn resolve_bin(name: &str) -> Option<String> {
     if cfg!(windows) {
-        let out = Command::new("where").arg(name).output().ok()?;
+        let out = command("where").arg(name).output().ok()?;
         if !out.status.success() {
             return None;
         }
         let path = String::from_utf8_lossy(&out.stdout);
         return path.lines().next().map(|s| s.trim().to_string());
     }
-    let out = Command::new("bash")
+    let out = command("bash")
         .arg("-lc")
         .arg(format!("command -v {name}"))
         .output()
@@ -63,13 +80,23 @@ fn resolve_bin(name: &str) -> Option<String> {
 }
 
 #[tauri::command]
-pub fn check_tools() -> ToolStatus {
-    ToolStatus {
+pub async fn check_tools() -> ToolStatus {
+    // Spawns up to three `where`/`command -v` subprocesses; keep it off the main
+    // thread so the UI doesn't hang while probing (Settings and Downloads both
+    // call this on open).
+    tauri::async_runtime::spawn_blocking(|| ToolStatus {
         yt_dlp: resolve_bin("yt-dlp").is_some(),
         ffmpeg: resolve_bin("ffmpeg").is_some(),
         brew: resolve_bin("brew").is_some(),
         os: std::env::consts::OS.to_string(),
-    }
+    })
+    .await
+    .unwrap_or(ToolStatus {
+        yt_dlp: false,
+        ffmpeg: false,
+        brew: false,
+        os: std::env::consts::OS.to_string(),
+    })
 }
 
 /// File holding the user's chosen download folder (one line). Absent = default.
@@ -141,7 +168,7 @@ pub async fn probe_url(url: String) -> Result<Vec<PlaylistEntry>, String> {
 
 fn probe_blocking(url: String) -> Result<Vec<PlaylistEntry>, String> {
     let yt_dlp = resolve_bin("yt-dlp").ok_or("yt-dlp is not installed")?;
-    let out = Command::new(&yt_dlp)
+    let out = command(&yt_dlp)
         .args([
             "--flat-playlist",
             "--no-warnings",
@@ -208,7 +235,7 @@ fn download_blocking(app: AppHandle, url: String) -> Result<Vec<DownloadedFile>,
     let list_path = std::env::temp_dir().join(format!("auralis-{nanos}.txt"));
     let output_template = dir.join("%(title)s.%(ext)s");
 
-    let mut child = Command::new(&yt_dlp)
+    let mut child = command(&yt_dlp)
         .args([
             "-x",
             "--audio-format",
@@ -304,7 +331,7 @@ pub fn read_file(path: String) -> Result<tauri::ipc::Response, String> {
 #[tauri::command]
 pub fn install_tools(app: AppHandle) -> Result<(), String> {
     let brew = resolve_bin("brew").ok_or("Homebrew is not installed. See https://brew.sh")?;
-    let mut child = Command::new(&brew)
+    let mut child = command(&brew)
         .args(["install", "yt-dlp", "ffmpeg"])
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
