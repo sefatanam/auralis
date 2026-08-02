@@ -371,6 +371,13 @@
   margin-bottom: 8px;
 }
 
+/* Phone: deepen bottom padding to clear the taller two-row mobile player. */
+@media (max-width: 600px) {
+  .downloads {
+    padding: 20px 16px calc(120px + env(safe-area-inset-bottom));
+  }
+}
+
 .empty {
   display: flex;
   flex-direction: column;

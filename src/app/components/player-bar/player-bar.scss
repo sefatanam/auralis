@@ -37,6 +37,16 @@
   gap: 2px;
   flex: none;
 }
+.transport .ctl {
+  width: var(--pb-ctl-size);
+  height: var(--pb-ctl-size);
+}
+.transport .ctl mat-icon {
+  font-size: var(--pb-ctl-icon);
+  width: var(--pb-ctl-icon);
+  height: var(--pb-ctl-icon);
+  line-height: var(--pb-ctl-icon);
+}
 
 .ctl.on {
   color: var(--apple-red);
@@ -49,10 +59,10 @@
   color: var(--text-primary);
 
   mat-icon {
-    font-size: 30px;
-    width: 30px;
-    height: 30px;
-    line-height: 30px;
+    font-size: var(--pb-play-icon);
+    width: var(--pb-play-icon);
+    height: var(--pb-play-icon);
+    line-height: var(--pb-play-icon);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -235,6 +245,54 @@
 }
 @media (max-width: 720px) {
   .hide-sm {
+    display: none;
+  }
+
+  :host {
+    height: auto;
+  }
+
+  /* Two rows: artwork + title + progress on top (tap art/title for
+     full-screen), transport controls below. */
+  .bar {
+    flex-direction: column;
+    height: auto;
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .lcd {
+    order: 1;
+    width: 100%;
+    max-width: none;
+    gap: 12px;
+    height: 56px;
+    padding: 0 14px 0 10px;
+  }
+  .lcd .art {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+  }
+  .lcd .meta {
+    font-size: 14.5px;
+  }
+  .lcd .time {
+    font-size: 12px;
+    min-width: 38px;
+  }
+  .lcd .scrub-track {
+    height: 18px;
+  }
+
+  /* Control sizes come from the --pb-* vars (styles.scss). */
+  .transport {
+    order: 2;
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  .extras {
     display: none;
   }
 }

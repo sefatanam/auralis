@@ -1,4 +1,10 @@
-<app-sidebar class="shell-sidebar" />
+<button class="menu-btn" [class.hidden]="nav.menuOpen()" aria-label="Open menu" (click)="nav.toggleMenu()">
+  <mat-icon>menu</mat-icon>
+</button>
+<app-sidebar class="shell-sidebar" [class.open]="nav.menuOpen()" />
+@if (nav.menuOpen()) {
+  <div class="scrim" (click)="nav.closeMenu()"></div>
+}
 <main class="shell-content">
   @if (nav.section() === 'downloads') {
     <app-downloads />

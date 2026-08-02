@@ -220,16 +220,28 @@
   gap: 14px;
   margin: 26px 0 0;
 }
+.np-transport .ctl {
+  width: var(--np-ctl-size);
+  height: var(--np-ctl-size);
+}
+.np-transport .ctl mat-icon {
+  font-size: var(--np-ctl-icon);
+  width: var(--np-ctl-icon);
+  height: var(--np-ctl-icon);
+  line-height: var(--np-ctl-icon);
+}
 .ctl.on {
   color: var(--apple-red);
 }
 .play.play {
+  width: var(--np-play-size);
+  height: var(--np-play-size);
   color: var(--text-primary);
   mat-icon {
-    font-size: 46px;
-    width: 46px;
-    height: 46px;
-    line-height: 46px;
+    font-size: var(--np-play-icon);
+    width: var(--np-play-icon);
+    height: var(--np-play-icon);
+    line-height: var(--np-play-icon);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -321,10 +333,11 @@
   }
 }
 
-/* Narrow: stack, hide the side panel */
+/* Narrow: stack, hide the side panel. minmax(0,1fr) keeps the column from
+   growing to the nowrap title's min-content width and overflowing the viewport. */
 @media (max-width: 860px) {
   .np-body {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     padding: 8px 28px 40px;
     gap: 20px;
   }
@@ -333,5 +346,44 @@
   }
   .np-panel {
     display: none;
+  }
+}
+
+/* Phone: no window traffic-lights to clear, so tighten the top bar and type. */
+@media (max-width: 600px) {
+  .np-top {
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-top: env(safe-area-inset-top);
+    height: calc(60px + env(safe-area-inset-top));
+  }
+  /* Device volume buttons handle this on a phone, and the slider overflowed the
+     edge — drop it, matching the mini-player. */
+  .np-vol {
+    display: none;
+  }
+  .np-body {
+    padding: 8px 20px calc(32px + env(safe-area-inset-bottom));
+  }
+  .np-info {
+    text-align: center;
+    margin-top: 22px;
+  }
+  .np-title {
+    font-size: 22px;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .np-artist {
+    font-size: 16px;
+  }
+
+  /* Sizes come from the --np-*  vars (styles.scss); just space them out more. */
+  .np-transport {
+    gap: 22px;
+    margin-top: 26px;
   }
 }

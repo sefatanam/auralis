@@ -87,6 +87,48 @@ html.theme-dark {
 
   --sidebar-width: 248px;
   --player-height: 68px;
+
+  // Now Playing transport controls (desktop defaults; phone override below).
+  --np-ctl-size: 40px;
+  --np-ctl-icon: 24px;
+  --np-play-size: 40px;
+  --np-play-icon: 46px;
+
+  // Mini player-bar transport controls (desktop defaults; phone override below).
+  --pb-ctl-size: 40px;
+  --pb-ctl-icon: 24px;
+  --pb-play-icon: 30px;
+
+  // Song list rows (desktop defaults; phone override below).
+  --song-row-height: 40px;
+  --song-row-font: 14px;
+}
+
+// Phone: larger touch targets for the Now Playing transport controls.
+@media (max-width: 600px) {
+  :root {
+    --np-ctl-size: 60px;
+    --np-ctl-icon: 40px;
+    --np-play-size: 78px;
+    --np-play-icon: 66px;
+  }
+}
+
+// Phone: larger touch targets for the mini player-bar transport controls.
+@media (max-width: 720px) {
+  :root {
+    --pb-ctl-size: 54px;
+    --pb-ctl-icon: 30px;
+    --pb-play-icon: 42px;
+  }
+}
+
+// Phone: taller song rows with slightly larger text for touch.
+@media (max-width: 640px) {
+  :root {
+    --song-row-height: 54px;
+    --song-row-font: 15px;
+  }
 }
 
 // ---- Material component restyle to Apple (token overrides on safe tokens) ----
