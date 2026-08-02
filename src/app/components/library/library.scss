@@ -175,7 +175,7 @@
   grid-template-columns: 26px minmax(0, 2.2fr) 54px minmax(0, 1.4fr) minmax(0, 1.6fr) minmax(0, 1fr);
   align-items: center;
   gap: 14px;
-  height: 40px;
+  height: var(--song-row-height);
   padding: 0 10px;
   color: var(--text-primary);
   border-bottom: 0.5px solid var(--hairline);
@@ -235,7 +235,7 @@
 .col-title {
   min-width: 0;
   font-weight: 500;
-  font-size: 14px;
+  font-size: var(--song-row-font);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -244,7 +244,7 @@
 .col-album,
 .col-genre {
   min-width: 0;
-  font-size: 13px;
+  font-size: calc(var(--song-row-font) - 1px);
   color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
@@ -254,7 +254,7 @@
   color: var(--text-tertiary);
 }
 .col-time {
-  font-size: 13px;
+  font-size: calc(var(--song-row-font) - 1px);
   color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
 }

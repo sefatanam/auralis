@@ -37,6 +37,15 @@ export const IS_TAURI =
   typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
 /**
+ * True on iOS/Android. Downloading shells out to yt-dlp/ffmpeg subprocesses,
+ * which mobile sandboxes forbid — so the download feature is unavailable there
+ * (folder loading still works; it's just a directory read).
+ */
+export const IS_MOBILE =
+  typeof navigator !== 'undefined' &&
+  /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+/**
  * Drives the YouTube→MP3 download feature: talks to the Rust `download` module
  * over Tauri IPC, streams progress, and feeds finished files into the existing
  * {@link LibraryService} import pipeline so they play like any imported track.
@@ -45,7 +54,7 @@ export const IS_TAURI =
 export class DownloadService {
   private readonly library = inject(LibraryService);
 
-  readonly available = IS_TAURI;
+  readonly available = IS_TAURI && !IS_MOBILE;
   readonly tools = signal<ToolStatus | null>(null);
   /** Absolute folder downloads are saved to. */
   readonly location = signal<string>('');
@@ -89,6 +98,19 @@ export class DownloadService {
     if (!IS_TAURI) return;
     const dir = await invoke<string | null>('pick_download_dir');
     if (dir) this.location.set(dir);
+  }
+
+  /**
+   * Load audio files already in the download folder (app downloads + files the
+   * user dropped in via the Files app) into the library, skipping any already
+   * imported (matched by file name).
+   */
+  async syncFolder(): Promise<void> {
+    if (!IS_TAURI) return;
+    const files = await invoke<DownloadedFile[]>('list_downloads').catch(() => []);
+    const have = new Set(this.library.tracks().map((t) => t.fileName));
+    const fresh = files.filter((f) => !have.has(f.name));
+    if (fresh.length) await this.importFiles(fresh);
   }
 
   /** List a playlist's entries (one entry for a single video) without downloading. */

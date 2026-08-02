@@ -16,19 +16,32 @@ export class NavService {
   readonly search = signal<string>('');
   /** Whether the full-screen Now Playing page is open. */
   readonly nowPlaying = signal(false);
+  /** Mobile-only: whether the sidebar drawer is open. Ignored by desktop CSS. */
+  readonly menuOpen = signal(false);
 
   show(view: LibraryView): void {
     this.openAlbum.set(null);
     this.section.set('library');
     this.view.set(view);
+    this.menuOpen.set(false);
   }
 
   showDownloads(): void {
     this.section.set('downloads');
+    this.menuOpen.set(false);
   }
 
   showSettings(): void {
     this.section.set('settings');
+    this.menuOpen.set(false);
+  }
+
+  toggleMenu(): void {
+    this.menuOpen.update((v) => !v);
+  }
+
+  closeMenu(): void {
+    this.menuOpen.set(false);
   }
 
   openNowPlaying(): void {

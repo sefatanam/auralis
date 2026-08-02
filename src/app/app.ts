@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { LibraryService } from './core/library.service';
+import { DownloadService } from './core/download.service';
 import { NavService } from './core/nav.service';
 import { PlayerBar } from './components/player-bar/player-bar';
 import { Sidebar } from './components/sidebar/sidebar';
@@ -23,11 +24,13 @@ import { Settings } from './components/settings/settings';
 })
 export class App {
   private readonly library = inject(LibraryService);
+  private readonly downloads = inject(DownloadService);
   protected readonly nav = inject(NavService);
   protected readonly dragging = signal(false);
 
   constructor() {
     inject(MatIconRegistry).setDefaultFontSetClass('material-icons-round');
+    void this.downloads.syncFolder();
   }
 
   protected onDragOver(e: DragEvent): void {

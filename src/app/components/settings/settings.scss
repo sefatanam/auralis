@@ -138,3 +138,32 @@ code.row-value {
 .danger {
   color: var(--apple-red);
 }
+
+/* Phone: stack each row (label over value) and let controls span full width;
+   deepen bottom padding to clear the taller two-row mobile player. */
+@media (max-width: 600px) {
+  .settings {
+    padding: 20px 16px calc(120px + env(safe-area-inset-bottom));
+    gap: 18px;
+  }
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .row-value {
+    text-align: left;
+
+    &.deps {
+      justify-content: flex-start;
+    }
+  }
+  .segmented {
+    display: flex;
+    width: 100%;
+  }
+  .seg {
+    flex: 1;
+    justify-content: center;
+  }
+}
